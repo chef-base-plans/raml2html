@@ -7,15 +7,19 @@ plan_ident = "#{plan_origin}/#{plan_name}"
 
 control 'core-plans-raml2html' do
   impact 1.0
-  title 'Ensure raml2html binary is working as expected'
+  title 'Ensure raml2html works'
   desc '
-  We first check that the raml2html binary we expect is present and then run version checks on both to verify that it is excecutable.
+  To test raml2html is present we check for the executable being present in the expected location.
+  We also run the following to ensure freetype-config is functional:
+    $ raml2html --version
+    6.3.0
   '
 
   hab_pkg_path = command("hab pkg path #{plan_ident}")
   describe hab_pkg_path do
-    its('exit_status') { should eq 0 }
     its('stdout') { should_not be_empty }
+    its('stderr') { should be_empty }
+    its('exit_status') { should eq 0 }
   end
 
   target_dir = File.join(hab_pkg_path.stdout.strip, base_dir)
@@ -27,9 +31,9 @@ control 'core-plans-raml2html' do
     its('exit_status') { should eq 0 }
   end
 
-  raml2html_works = command("/bin/raml2html --version")
+  raml2html_works = command("#{File.join(target_dir, "raml2html")} --version")
   describe raml2html_works do
-    its('stdout') { should match /[0-9]+.[0-9]+.[0-9]+/ }
+    its('stdout') { should match /#{hab_pkg_path.stdout.strip.split('/')[5]}/ }
     its('stderr') { should be_empty }
     its('exit_status') { should eq 0 }
   end
